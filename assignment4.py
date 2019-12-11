@@ -1,3 +1,5 @@
+#!/usr/bin/env python 
+
 import numpy as np
 from sklearn import datasets as skdata
 from sklearn.linear_model import Perceptron
@@ -20,8 +22,8 @@ n_epoch = 40    # Number of times to go through training data
 digits = skdata.load_digits()
 
 # Select data
-x = np.asarray(digits.data, np.float32)
-y = np.asarray(digits.target, np.uint8)
+x = np.asarray(digits.data, np.float32)  # (-1, 64)
+y = np.asarray(digits.target, np.uint8)  # (-1) -> {0, 1, 2, 3, ..., 9}
 
 # Define data split
 n_train = 1440
@@ -43,10 +45,13 @@ x_test = x[n_train+n_validate:n_train+n_validate+n_test, ...]
 y_test = y[n_train+n_validate:n_train+n_validate+n_test]
 n_step_test = n_test//n_batch
 
+
+# 
 with tf.Graph().as_default():
   global_step = tf.Variable(0, trainable=False)
 
   # TODO: Set up learning rate with polynomial decay
+
 
   # TODO: Set up optimizer
 
@@ -81,6 +86,7 @@ with tf.Graph().as_default():
       # TODO: Iterate over batches in the epoch and train model
 
       # TODO: Append loss to losses
+      print("hi")
 
     print('Epoch={}  Loss={}'.format(epoch, np.mean(np.asarray(losses))))
 
