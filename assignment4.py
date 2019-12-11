@@ -150,10 +150,17 @@ with tf.Graph().as_default():
     predicts = np.zeros([n_validate])
     for step in range(n_step_validate):
       # TODO: Iterate over batches in the validation set and make predictions
-      print("hi")
+      batch_start = step * n_batch
+      batch_end = batch_start + n_batch 
+
+      # Don't need to supervise the system on validation data
+      feed_dict = { x_input : x_validate[batch_start:batch_end, ...] }
+
+      predicts[batch_start:batch_end, ...] = session.run(predictions, feed_dict=feed_dict)
 
     # TODO: Evaluate accuracy
-    score = 0.0
+    # Compare with y_validate
+    score = np.mean(np.where(predicts == y_validate, 1.0, 0.0))
     print('Validation Accuracy={}'.format(score))
 
   # Test your model
