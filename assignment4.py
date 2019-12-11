@@ -46,12 +46,18 @@ y_test = y[n_train+n_validate:n_train+n_validate+n_test]
 n_step_test = n_test//n_batch
 
 
-# 
 with tf.Graph().as_default():
   global_step = tf.Variable(0, trainable=False)
 
   # TODO: Set up learning rate with polynomial decay
+  learning_rate_start = 1e-4
+  learning_rate_end = 1e-5
 
+  # learning rate decay function
+  tf.train.polynomial_decay(
+    learning_rate_start,
+    global_step=global_step
+  )
 
   # TODO: Set up optimizer
 
@@ -94,6 +100,7 @@ with tf.Graph().as_default():
     predicts = np.zeros([n_validate])
     for step in range(n_step_validate):
       # TODO: Iterate over batches in the validation set and make predictions
+      print("hi")
 
     # TODO: Evaluate accuracy
     score = 0.0
@@ -103,6 +110,7 @@ with tf.Graph().as_default():
   predicts = np.zeros([n_test])
   for step in range(n_step_test):
     # TODO: Iterate over batches in the testing set and make predictions
+    print("hello")
 
   # Perceptron accuracy
   scikit_perceptron = Perceptron(penalty=None, alpha=0.0, tol=1e-5)
