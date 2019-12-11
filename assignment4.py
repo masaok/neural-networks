@@ -14,7 +14,11 @@ Name: Doe, John (Please write names in <Last Name, First Name> format)
 Collaborators: Doe, Jane (Please write names in <Last Name, First Name> format)
 
 Collaboration details: Discussed <function name> implementation details with Jane Doe.
+
+pip install tensorflow==1.14
+pip install tensorflow-gpu==1.14
 """
+
 
 n_batch = 32    # Size of each batch
 n_epoch = 40    # Number of times to go through training data
@@ -50,7 +54,7 @@ with tf.Graph().as_default():
   global_step = tf.Variable(0, trainable=False)
 
   # TODO: Set up learning rate with polynomial decay
-  learning_rate_start = 1e-4
+  learning_rate_start = 1e-3  # changing this step size
   learning_rate_end = 1e-5
 
   # learning rate decay function
@@ -63,7 +67,8 @@ with tf.Graph().as_default():
   )
 
   # TODO: Set up optimizer
-  optimizer = tf.train.GradientDescentOptimizer(learning_rates)
+  #optimizer = tf.train.GradientDescentOptimizer(learning_rates)
+  optimizer = tf.train.AdamOptimizer(learning_rates)
 
   print('Building computational graph...')
   # TODO: Define placeholders for x and y inputs
@@ -86,12 +91,12 @@ with tf.Graph().as_default():
   # With Leaky Relu, you can have negative prediction
   fc1 = tf.contrib.layers.fully_connected(x_input,
     num_outputs=64,
-    activation_fn=tf.nn.sigmoid  # Or you can use: tf.nn.relu
+    activation_fn=tf.nn.relu  # Or you can use: tf.nn.relu  or tf.nn.relu
   )
 
   fc2 = tf.contrib.layers.fully_connected(fc1,
     num_outputs=32,
-    activation_fn=tf.nn.sigmoid
+    activation_fn=tf.nn.relu
   )
 
   outputs = tf.contrib.layers.fully_connected(fc2,
@@ -167,7 +172,11 @@ with tf.Graph().as_default():
   predicts = np.zeros([n_test])
   for step in range(n_step_test):
     # TODO: Iterate over batches in the testing set and make predictions
-    print("hello")
+    batch_start = step * n_batch
+    batch_end = batch_start + n_batch 
+    feed_dict = { x_input : x_test[batch_start:batch_end, ...]}
+    predicts[batch_start:batch_end, ...] = session.run(predictions, feed_dict=feed_dict)
+
 
   # Perceptron accuracy
   scikit_perceptron = Perceptron(penalty=None, alpha=0.0, tol=1e-5)
@@ -182,8 +191,16 @@ with tf.Graph().as_default():
   print('Scikit-learn Logistic Regression Testing Accuracy={}'.format(scikit_logistic_scores))
 
   # TODO: Evaluate accuracy
-  score = 0.0
+  score = np.mean(np.where(predicts == y_test, 1.0, 0.0))
   print('Our Neural Network Testing Accuracy={}'.format(score))
 
   # TODO: Show 5 by 5 plot of examples from test set predictions
   # with each subplot titled with y=... y_hat=...
+  fig = plt.figure()
+  plt.suptitle("Test set predictions")
+  for i in range(25):
+    ax = fig.add_subplot(5, 5, i+1)
+    ax.set_title('y={} h={}'.format(int(y_test[i]), int(predicts[i])))
+    ax.imshow(np.reshape(x_test[i, ...], [8, 8]))
+
+plt.show(block=True)
