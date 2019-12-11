@@ -78,14 +78,38 @@ with tf.Graph().as_default():
 
   # TODO: Create a neural network
   # e.g. 3-layer network with 64, 32, and 10 neurons with ReLU
+  # Transform (Project), reduce, predict (these what the layers represent)
+
+  # Relu has linear activation, for easier gradients that means faster convergence
+  # With Sigmoid, you can bound your predictions to 0 and 1
+  # With Hyperbolic Tangent, you can bound between -1 and 1
+  # With Leaky Relu, you can have negative prediction
+  fc1 = tf.contrib.layers.fully_connected(x_input,
+    num_outputs=64,
+    activation_fn=tf.nn.sigmoid  # Or you can use: tf.nn.relu
+  )
+
+  fc2 = tf.contrib.layers.fully_connected(fc1,
+    num_outputs=32,
+    activation_fn=tf.nn.sigmoid
+  )
+
+  outputs = tf.contrib.layers.fully_connected(fc2,
+    num_outputs=10,
+    activation_fn=tf.identity
+  )
 
   # TODO: Apply softmax to outputs and take max
+  predictions = tf.argmax(tf.nn.softmax(outputs), -1)  # -1 is the last dimension
 
   # TODO: Compute cross entropy with softmax activations
+  total_loss = tf.nn.softmax_cross_entropy_with_logits(labels=labels, logits=outputs)
 
   # TODO: Compute gradients
+  gradients = optimizer.compute_gradients(total_loss)
 
   # TODO: Apply gradients to update weights
+  train_op = optimizer.apply_gradients(gradients, global_step=global_step)
 
   # Create a Tensorflow session
   session = tf.Session()
@@ -95,14 +119,30 @@ with tf.Graph().as_default():
 
   for epoch in range(1, n_epoch+1):
     # TODO: Shuffle data
+    order = np.random.permutation(x_train.shape[0])
+    x_train_epoch = x_train[order, ...]
+    y_train_epoch = y_train[order, ...]
 
     # Create a list to store losses over the epoch
     losses = []
+
+    # A step is a time step in your training process
+    # Grab a chunk of data (x_train_epoch, y_train_epoch)
+    # Feed it into the network (graph)
+    # Append to losses
     for step in range(n_step_train):
       # TODO: Iterate over batches in the epoch and train model
+      batch_start = step * n_batch
+      batch_end = batch_start + n_batch
+      feed_dict = { x_input : x_train_epoch[batch_start:batch_end, ...],
+                    y_input : y_train_epoch[batch_start:batch_end, ...]
+      }
+
+      # The blank _ is a value we don't care about
+      loss, _ = session.run([total_loss, train_op], feed_dict=feed_dict)
 
       # TODO: Append loss to losses
-      print("hi")
+      losses.append(loss)
 
     print('Epoch={}  Loss={}'.format(epoch, np.mean(np.asarray(losses))))
 
