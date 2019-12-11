@@ -54,17 +54,27 @@ with tf.Graph().as_default():
   learning_rate_end = 1e-5
 
   # learning rate decay function
-  tf.train.polynomial_decay(
+  learning_rates = tf.train.polynomial_decay(
     learning_rate_start,
-    global_step=global_step
+    global_step=global_step,
+    decay_steps=n_epoch * n_step_train,
+    end_learning_rate=learning_rate_end,
+    power=0.5
   )
 
   # TODO: Set up optimizer
+  optimizer = tf.train.GradientDescentOptimizer(learning_rates)
 
   print('Building computational graph...')
   # TODO: Define placeholders for x and y inputs
 
-  # TODO: Convert y into one hot vector form
+  # Placeholders are entrypoints to the graph
+  x_input = tf.placeholder(tf.float32, shape=[n_batch, x.shape[1]])
+  y_input = tf.placeholder(tf.uint8, shape=[n_batch])
+
+  # TODO: Convert y into one hot vector form (a bitmask)
+  num_classes = 10
+  labels = tf.one_hot(y_input, num_classes, 1.0, 0.0)
 
   # TODO: Create a neural network
   # e.g. 3-layer network with 64, 32, and 10 neurons with ReLU
