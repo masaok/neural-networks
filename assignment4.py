@@ -9,16 +9,36 @@ from matplotlib import pyplot as plt
 
 
 """
-Name: Doe, John (Please write names in <Last Name, First Name> format)
+Name: Kitamura, Masao
 
-Collaborators: Doe, Jane (Please write names in <Last Name, First Name> format)
+Collaborators: Doe, Jane
 
 Collaboration details: Discussed <function name> implementation details with Jane Doe.
 
 pip install tensorflow==1.14
 pip install tensorflow-gpu==1.14
-"""
 
+Tuners:
+- learning rate
+- optimizers  (Adam, GradientDescent, RMSprop (belief propagation))
+- activations  (relu, leaky_relu)
+- decay functions  (polynomial, exponential, cosine)
+- decay rate (learning_rate start/end)
+- preprocessing (standardization, normalization, PCA (dimension reduction))
+- network architecture
+  - number of neurons (d dimensions, n is number of examples)
+  - number of layers
+    - Adding more layers is the most expensive thing you can do, so do it last
+    - Neurons is tools for your brain to work with (crayons for rainbow)
+    - Layers is more knowledge (knowing what a rainbow looks like)
+
+90% for 80+ accuracy plus a good report.
+For every percent over 95% will be 1% direct to grade.
+
+Run like this:
+watch -d './assignment4.py 2>/dev/null | tail -10'
+
+"""
 
 n_batch = 32    # Size of each batch
 n_epoch = 40    # Number of times to go through training data
@@ -54,10 +74,14 @@ with tf.Graph().as_default():
   global_step = tf.Variable(0, trainable=False)
 
   # TODO: Set up learning rate with polynomial decay
-  learning_rate_start = 1e-3  # changing this step size
-  learning_rate_end = 1e-5
+  # Learning rate can change over time
+  learning_rate_start = 5e-3  # changing this step size (started at 1e-4)
+  learning_rate_end = 1e-20   # Started at 1e-5, but a smaller end is higher accuracy
 
-  # learning rate decay function
+  # Learning rate decay function (polynomial, exponential, cosine)
+
+  # Polynomial Decay
+  # https://www.tensorflow.org/api_docs/python/tf/compat/v1/train/polynomial_decay
   learning_rates = tf.train.polynomial_decay(
     learning_rate_start,
     global_step=global_step,
@@ -66,9 +90,33 @@ with tf.Graph().as_default():
     power=0.5
   )
 
+  # Exponential decay is about the same as polynomial decay
+  # https://www.tensorflow.org/api_docs/python/tf/compat/v1/train/exponential_decay
+  # learning_rates = tf.train.exponential_decay(
+  #   learning_rate_start,
+  #   global_step=global_step,
+  #   decay_rate=1,
+  #   decay_steps=n_epoch * n_step_train,
+  #   # end_learning_rate=learning_rate_end,
+  #   # power=0.5
+  # )
+
+  # Cosine decay drops accuracy about 5%
+  # https://www.tensorflow.org/api_docs/python/tf/compat/v1/train/cosine_decay
+  # learning_rates = tf.train.cosine_decay(
+  #   learning_rate_start,
+  #   global_step=global_step,
+  #   decay_steps=n_epoch * n_step_train 
+  # )
+
+
   # TODO: Set up optimizer
-  #optimizer = tf.train.GradientDescentOptimizer(learning_rates)
+  # optimizer = tf.train.GradientDescentOptimizer(learning_rates)
   optimizer = tf.train.AdamOptimizer(learning_rates)
+
+  # optimizer = tf.train.Optimizer(learning_rates)
+  # optimizer = tf.train.RMSprop(learning_rates) # fail
+  # optimizer = tf.train.SGD(learning_rates) # fail
 
   print('Building computational graph...')
   # TODO: Define placeholders for x and y inputs
@@ -89,17 +137,61 @@ with tf.Graph().as_default():
   # With Sigmoid, you can bound your predictions to 0 and 1
   # With Hyperbolic Tangent, you can bound between -1 and 1
   # With Leaky Relu, you can have negative prediction
+
+  # 64 x 32 x 10 neurons
+  # fc1 = tf.contrib.layers.fully_connected(x_input,
+  #   num_outputs=64,
+  #   activation_fn=tf.nn.relu  # Or you can use: tf.nn.relu  or tf.nn.relu
+  # )
+
+  # fc2 = tf.contrib.layers.fully_connected(fc1,
+  #   num_outputs=32,
+  #   activation_fn=tf.nn.relu  # Or leaky_relu
+  # )
+
+  # outputs = tf.contrib.layers.fully_connected(fc2,
+  #   num_outputs=10,
+  #   activation_fn=tf.identity
+  # )
+
+  # Double neurons
+  # fc1 = tf.contrib.layers.fully_connected(x_input,
+  #   num_outputs=128,
+  #   activation_fn=tf.nn.relu  # Or you can use: tf.nn.relu  or tf.nn.relu
+  # )
+
+  # fc2 = tf.contrib.layers.fully_connected(fc1,
+  #   num_outputs=64,
+  #   activation_fn=tf.nn.relu  # Or leaky_relu
+  # )
+
+  # outputs = tf.contrib.layers.fully_connected(fc2,
+  #   num_outputs=10,
+  #   activation_fn=tf.identity
+  # )
+
+  # Extra layer with (10x neurons)
   fc1 = tf.contrib.layers.fully_connected(x_input,
-    num_outputs=64,
+    num_outputs=128,
     activation_fn=tf.nn.relu  # Or you can use: tf.nn.relu  or tf.nn.relu
   )
 
   fc2 = tf.contrib.layers.fully_connected(fc1,
-    num_outputs=32,
-    activation_fn=tf.nn.relu
+    num_outputs=64,
+    activation_fn=tf.nn.relu  # Or leaky_relu
   )
 
-  outputs = tf.contrib.layers.fully_connected(fc2,
+  fc3 = tf.contrib.layers.fully_connected(fc2,
+    num_outputs=32,
+    activation_fn=tf.nn.relu  # Or leaky_relu
+  )
+
+  fc4 = tf.contrib.layers.fully_connected(fc3,
+    num_outputs=16,
+    activation_fn=tf.nn.relu  # Or leaky_relu
+  )
+
+  outputs = tf.contrib.layers.fully_connected(fc4,
     num_outputs=10,
     activation_fn=tf.identity
   )
@@ -149,7 +241,7 @@ with tf.Graph().as_default():
       # TODO: Append loss to losses
       losses.append(loss)
 
-    print('Epoch={}  Loss={}'.format(epoch, np.mean(np.asarray(losses))))
+    # print('Epoch={}  Loss={}'.format(epoch, np.mean(np.asarray(losses))))
 
     # Validate your results
     predicts = np.zeros([n_validate])
@@ -163,10 +255,17 @@ with tf.Graph().as_default():
 
       predicts[batch_start:batch_end, ...] = session.run(predictions, feed_dict=feed_dict)
 
+    # Training vs Validation vs Test sets
+    # https://stackoverflow.com/questions/2976452/whats-is-the-difference-between-train-validation-and-test-set-in-neural-netwo
+
+    # What is overfitting?
+    # https://towardsdatascience.com/deep-learning-overfitting-846bf5b35e24
+
     # TODO: Evaluate accuracy
     # Compare with y_validate
     score = np.mean(np.where(predicts == y_validate, 1.0, 0.0))
-    print('Validation Accuracy={}'.format(score))
+    # print('Validation Accuracy={}'.format(score))
+    print('Epoch={}  Loss={}  Accuracy={}'.format(epoch, np.mean(np.asarray(losses)), score))
 
   # Test your model
   predicts = np.zeros([n_test])
@@ -178,17 +277,24 @@ with tf.Graph().as_default():
     predicts[batch_start:batch_end, ...] = session.run(predictions, feed_dict=feed_dict)
 
 
-  # Perceptron accuracy
-  scikit_perceptron = Perceptron(penalty=None, alpha=0.0, tol=1e-5)
-  scikit_perceptron.fit(x_train, y_train)
-  scikit_perceptron_scores = scikit_perceptron.score(x_test, y_test)
-  print('Scikit-learn Perceptron Testing Accuracy={}'.format(scikit_perceptron_scores))
+  # # Perceptron accuracy
+  # scikit_perceptron = Perceptron(penalty=None, alpha=0.0, tol=1e-5)
+  # scikit_perceptron.fit(x_train, y_train)
+  # scikit_perceptron_scores = scikit_perceptron.score(x_test, y_test)
+  # print('Scikit-learn Perceptron Testing Accuracy={}'.format(scikit_perceptron_scores))
 
-  # Perceptron accuracy
-  scikit_logistic = LogisticRegression(solver='liblinear')
-  scikit_logistic.fit(x_train, y_train)
-  scikit_logistic_scores = scikit_logistic.score(x_test, y_test)
-  print('Scikit-learn Logistic Regression Testing Accuracy={}'.format(scikit_logistic_scores))
+  # # Perceptron accuracy
+  # scikit_logistic = LogisticRegression(solver='liblinear')
+  # scikit_logistic.fit(x_train, y_train)
+  # scikit_logistic_scores = scikit_logistic.score(x_test, y_test)
+  # print('Scikit-learn Logistic Regression Testing Accuracy={}'.format(scikit_logistic_scores))
+
+  # Print tuning variables
+  print("learning_rate_start: " + str(learning_rate_start))
+  print("learning_rate_end: " + str(learning_rate_end))
+
+  print("n_batch: " + str(n_batch))
+  print("n_epoch: " + str(n_epoch))
 
   # TODO: Evaluate accuracy
   score = np.mean(np.where(predicts == y_test, 1.0, 0.0))
@@ -196,11 +302,16 @@ with tf.Graph().as_default():
 
   # TODO: Show 5 by 5 plot of examples from test set predictions
   # with each subplot titled with y=... y_hat=...
-  fig = plt.figure()
-  plt.suptitle("Test set predictions")
-  for i in range(25):
-    ax = fig.add_subplot(5, 5, i+1)
-    ax.set_title('y={} h={}'.format(int(y_test[i]), int(predicts[i])))
-    ax.imshow(np.reshape(x_test[i, ...], [8, 8]))
 
-plt.show(block=True)
+  # fig = plt.figure()
+  # # fig = plt.figure(dpi=100)
+  # plt.subplots_adjust(top=1.2)
+  # plt.suptitle("Test set predictions")
+  # plt.axis('off')
+  # for i in range(25):
+  #   ax = fig.add_subplot(5, 5, i+1)
+  #   ax.set_title('y={} h={}'.format(int(y_test[i]), int(predicts[i])))
+  #   ax.axis('off')
+  #   ax.imshow(np.reshape(x_test[i, ...], [8, 8]), cmap='gray')
+
+# plt.show(block=True)
