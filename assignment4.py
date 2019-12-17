@@ -1,4 +1,4 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python3 
 
 import numpy as np
 from sklearn import datasets as skdata
@@ -40,8 +40,13 @@ watch -d './assignment4.py 2>/dev/null | tail -10'
 
 """
 
-n_batch = 32    # Size of each batch
-n_epoch = 40    # Number of times to go through training data
+# n_batch = 32    # Size of each batch
+n_batch = 16    # 91%
+# n_batch = 8      # 91%
+# n_batch = 4       # 91%
+
+# n_epoch = 40    # Number of times to go through training data
+n_epoch = 20   # Number of times to go through training data
 
 digits = skdata.load_digits()
 
@@ -171,30 +176,51 @@ with tf.Graph().as_default():
   # )
 
   # Extra layer with (10x neurons)
+  # fc1 = tf.contrib.layers.fully_connected(x_input,
+  #   num_outputs=128,
+  #   activation_fn=tf.nn.relu  # Or you can use: tf.nn.relu  or tf.nn.relu
+  # )
+
+  # fc2 = tf.contrib.layers.fully_connected(fc1,
+  #   num_outputs=64,
+  #   activation_fn=tf.nn.relu  # Or leaky_relu
+  # )
+
+  # fc3 = tf.contrib.layers.fully_connected(fc2,
+  #   num_outputs=32,
+  #   activation_fn=tf.nn.relu  # Or leaky_relu
+  # )
+
+  # fc4 = tf.contrib.layers.fully_connected(fc3,
+  #   num_outputs=16,
+  #   activation_fn=tf.nn.relu  # Or leaky_relu
+  # )
+
+  num_outputs = 256
+  output_counts = []
+  output_counts.append(num_outputs)
   fc1 = tf.contrib.layers.fully_connected(x_input,
-    num_outputs=128,
+    num_outputs=num_outputs,
     activation_fn=tf.nn.relu  # Or you can use: tf.nn.relu  or tf.nn.relu
   )
+  num_outputs = int(num_outputs / 2)
+  layers = 1
+  while num_outputs > 10:
+    print("num_outputs: " + str(num_outputs))
+    output_counts.append(num_outputs)
+    fc1 = tf.contrib.layers.fully_connected(fc1,
+      num_outputs=num_outputs,
+      activation_fn=tf.nn.relu  # Or leaky_relu
+    )
+    num_outputs = int(num_outputs / 2)
+    layers += 1
 
-  fc2 = tf.contrib.layers.fully_connected(fc1,
-    num_outputs=64,
-    activation_fn=tf.nn.relu  # Or leaky_relu
-  )
-
-  fc3 = tf.contrib.layers.fully_connected(fc2,
-    num_outputs=32,
-    activation_fn=tf.nn.relu  # Or leaky_relu
-  )
-
-  fc4 = tf.contrib.layers.fully_connected(fc3,
-    num_outputs=16,
-    activation_fn=tf.nn.relu  # Or leaky_relu
-  )
-
-  outputs = tf.contrib.layers.fully_connected(fc4,
+  outputs = tf.contrib.layers.fully_connected(fc1,
     num_outputs=10,
     activation_fn=tf.identity
   )
+  layers += 1
+  output_counts.append(10)
 
   # TODO: Apply softmax to outputs and take max
   predictions = tf.argmax(tf.nn.softmax(outputs), -1)  # -1 is the last dimension
@@ -295,6 +321,8 @@ with tf.Graph().as_default():
 
   print("n_batch: " + str(n_batch))
   print("n_epoch: " + str(n_epoch))
+  print("layers: " + str(layers))
+  print("neurons: " + str(output_counts))
 
   # TODO: Evaluate accuracy
   score = np.mean(np.where(predicts == y_test, 1.0, 0.0))
