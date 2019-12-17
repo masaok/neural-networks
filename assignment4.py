@@ -6,6 +6,7 @@ from sklearn.linear_model import Perceptron
 from sklearn.linear_model import LogisticRegression
 import tensorflow as tf
 from matplotlib import pyplot as plt
+# import matplotlib.gridspec as gridspec
 
 
 """
@@ -210,7 +211,7 @@ with tf.Graph().as_default():
     output_counts.append(num_outputs)
     fc1 = tf.contrib.layers.fully_connected(fc1,
       num_outputs=num_outputs,
-      activation_fn=tf.nn.relu  # Or leaky_relu
+      activation_fn=tf.nn.relu
     )
     num_outputs = int(num_outputs / 2)
     layers += 1
@@ -331,15 +332,20 @@ with tf.Graph().as_default():
   # TODO: Show 5 by 5 plot of examples from test set predictions
   # with each subplot titled with y=... y_hat=...
 
-  # fig = plt.figure()
-  # # fig = plt.figure(dpi=100)
-  # plt.subplots_adjust(top=1.2)
-  # plt.suptitle("Test set predictions")
-  # plt.axis('off')
-  # for i in range(25):
-  #   ax = fig.add_subplot(5, 5, i+1)
-  #   ax.set_title('y={} h={}'.format(int(y_test[i]), int(predicts[i])))
-  #   ax.axis('off')
-  #   ax.imshow(np.reshape(x_test[i, ...], [8, 8]), cmap='gray')
+  fig = plt.figure()
+  # fig = plt.figure(dpi=100)
+  plt.subplots_adjust(top=1.2)
+  plt.title('Test set predictions', y=-0.06)
+  plt.axis('off')
+  # plt.margins(10)
+  for i in range(25):
+    ax = fig.add_subplot(5, 5, i+1)
+    ax.set_title('y={} h={}'.format(int(y_test[i]), int(predicts[i])))
+    ax.axis('off')
+    ax.margins(10)
+    ax.imshow(np.reshape(x_test[i, ...], [8, 8]), cmap='gray')
 
-# plt.show(block=True)
+# gs1 = gridspec.GridSpec(1, 1)
+# gs1.tight_layout(plt)
+
+plt.show(block=True)
